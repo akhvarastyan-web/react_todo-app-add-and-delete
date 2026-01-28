@@ -117,6 +117,13 @@ export const App: React.FC = () => {
       });
   };
 
+  const onClearCompleted = () => {
+  const completedTodos = todos.filter(todo => todo.completed);
+  completedTodos.forEach(todo => {
+    handleDelete(todo.id);
+  });
+};
+
   const completedCount = todos.filter(todo => todo.completed).length;
 
   if (!USER_ID) {
@@ -182,16 +189,18 @@ export const App: React.FC = () => {
               </nav>
 
               {/* this button should be disabled if there are no completed todos */}
-              {completedCount > 0 && (
                 <button
                   type="button"
                   className="todoapp__clear-completed"
                   data-cy="ClearCompletedButton"
-                  onClick={() => {}}
+                  onClick={onClearCompleted}
+                  disabled={completedCount === 0}
+  style={{
+    visibility: completedCount > 0 ? 'visible' : 'hidden'
+  }}
                 >
                   Clear completed
                 </button>
-              )}
             </footer>
           </>
         )}
