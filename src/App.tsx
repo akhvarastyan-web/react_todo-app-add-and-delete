@@ -1,13 +1,15 @@
 /* eslint-disable max-len */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useEffect, useState } from 'react';
-import cn from 'classnames';
 import { UserWarning } from './UserWarning';
 import { USER_ID, getTodos, createTodo, deleteTodo } from './api/todo';
 import { Todo } from './types/Todo';
+import { NO_TODO, NO_TITLE, NO_DELETE } from './utils/errorMessages';
 
 import { Header } from './components/header';
 import { TodoList } from './components/todoList';
+import { Footer } from './components/footer';
+import { ErrorNotification } from './components/errorNotification';
 
 type FilterType = 'all' | 'active' | 'completed';
 
@@ -66,7 +68,7 @@ export const App: React.FC = () => {
     setErrorMessage('');
 
     if (!query.trim()) {
-      setErrorMessage('Title should not be empty');
+      setErrorMessage(NO_TITLE);
 
       inputRef.current?.focus();
 
@@ -90,7 +92,7 @@ export const App: React.FC = () => {
         setQuery('');
       })
       .catch(() => {
-        setErrorMessage('Unable to add a todo');
+        setErrorMessage(NO_TODO);
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -109,7 +111,7 @@ export const App: React.FC = () => {
         setTodos(prev => prev.filter(todo => todo.id !== todoId));
       })
       .catch(() => {
-        setErrorMessage('Unable to delete a todo');
+        setErrorMessage(NO_DELETE);
       })
       .finally(() => {
         setIsLoading(prev => prev.filter(id => id !== todoId));
@@ -118,13 +120,15 @@ export const App: React.FC = () => {
   };
 
   const onClearCompleted = () => {
-  const completedTodos = todos.filter(todo => todo.completed);
-  completedTodos.forEach(todo => {
-    handleDelete(todo.id);
-  });
-};
+    const completedTodos = todos.filter(todo => todo.completed);
+
+    completedTodos.forEach(todo => {
+      handleDelete(todo.id);
+    });
+  };
 
   const completedCount = todos.filter(todo => todo.completed).length;
+  const uncompletedCount = todos.filter(todo => !todo.completed).length;
 
   if (!USER_ID) {
     return <UserWarning />;
@@ -142,6 +146,7 @@ export const App: React.FC = () => {
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
           inputRef={inputRef}
+          completedCount={completedCount}
         />
 
         {(todos.length > 0 || tempTodo) && (
@@ -153,76 +158,23 @@ export const App: React.FC = () => {
               onDelete={handleDelete}
             />
 
-            <footer className="todoapp__footer" data-cy="Footer">
-              <span className="todo-count" data-cy="TodosCounter">
-                {todos.filter(todo => !todo.completed).length} items left
-              </span>
-
-              {/* Active link should have the 'selected' class */}
-              <nav className="filter" data-cy="Filter">
-                <a
-                  href="#/"
-                  className={`filter__link ${filter === 'all' ? 'selected' : ''}`}
-                  data-cy="FilterLinkAll"
-                  onClick={() => setFilter('all')}
-                >
-                  All
-                </a>
-
-                <a
-                  href="#/active"
-                  className={`filter__link ${filter === 'active' ? 'selected' : ''}`}
-                  data-cy="FilterLinkActive"
-                  onClick={() => setFilter('active')}
-                >
-                  Active
-                </a>
-
-                <a
-                  href="#/completed"
-                  className={`filter__link ${filter === 'completed' ? 'selected' : ''}`}
-                  data-cy="FilterLinkCompleted"
-                  onClick={() => setFilter('completed')}
-                >
-                  Completed
-                </a>
-              </nav>
-
-              {/* this button should be disabled if there are no completed todos */}
-                <button
-                  type="button"
-                  className="todoapp__clear-completed"
-                  data-cy="ClearCompletedButton"
-                  onClick={onClearCompleted}
-                  disabled={completedCount === 0}
-  style={{
-    visibility: completedCount > 0 ? 'visible' : 'hidden'
-  }}
-                >
-                  Clear completed
-                </button>
-            </footer>
+            <Footer
+              uncompletedCount={uncompletedCount}
+              completedCount={completedCount}
+              onClearCompleted={onClearCompleted}
+              setFilter={setFilter}
+              filter={filter}
+            />
           </>
         )}
       </div>
 
       {/* DON'T use conditional rendering to hide the notification */}
       {/* Add the 'hidden' class to hide the message smoothly */}
-      <div
-        data-cy="ErrorNotification"
-        className={cn(
-          'notification is-danger is-light has-text-weight-normal',
-          { hidden: !errorMessage },
-        )}
-      >
-        <button
-          data-cy="HideErrorButton"
-          type="button"
-          className="delete"
-          onClick={() => setErrorMessage('')}
-        />
-        {errorMessage}
-      </div>
+      <ErrorNotification
+        setErrorMessage={setErrorMessage}
+        errorMessage={errorMessage}
+      />
     </div>
   );
 };

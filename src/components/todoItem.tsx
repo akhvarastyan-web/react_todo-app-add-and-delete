@@ -16,7 +16,9 @@ export const TodoItem: React.FC<Props> = ({
   return (
     <div
       data-cy="Todo"
-      className={`todo ${todo.completed ? 'completed' : ''}`}
+      className={cn('todo', {
+        completed: todo.completed,
+      })}
       key={todo.id}
     >
       <label htmlFor={`todo-status-${todo.id}`} className="todo__status-label">
